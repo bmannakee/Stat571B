@@ -1,0 +1,37 @@
+\documentclass{article}
+\usepackage[a4paper]{geometry}
+\usepackage{fancyhdr}
+\pagestyle{fancyplain}
+\begin{document}
+\lhead{Math 571B\\ Homework 1}
+\rhead{Brian Mannakee\\ \today}
+
+\SweaveOpts{concordance=TRUE}
+<<echo=FALSE>>=
+library(combinat)
+library(xtable)
+yield <- c(3,5,4,2,7,4)
+treatments <- c('A','B','B','A','B','A')
+randomized <- unique(permn(treatments))
+frame <- data.frame(rbind(yield,matrix(unlist(randomized),nrow=20,byrow=T)))
+row.names(frame) <- c('Yield','Design 1','Design 2','Design 3','Design 4','Design 5','Design 6','Design 7','Design 8','Design 9','Design 10','Design 11','Design 12','Design 13','Design 14','Design 15','Design 16','Design 17','Design 18','Design 19','Design 20')
+colnames(frame) <- c(1,2,3,4,5,6)
+frame$MeanA <- apply(frame,1,function(row) round(sum(yield[which(row=='A')])/3,3))
+frame$MeanB <- apply(frame,1,function(row) round(sum(yield[which(row=='B')])/3,3))
+frame$MeanDiff <- frame$MeanA - frame$MeanB
+frame.table <- xtable(frame,caption='Randomization Matrix')
+@
+
+\begin{enumerate}
+  \item 
+    \begin{enumerate}
+      \item The randomization matrix for treatments A and B along with the means and mean difference for each of the 20 unique possible designs 
+<<echo=FALSE,results=tex>>=
+frame.table
+@
+    \end{enumerate}
+\end{enumerate}
+
+
+
+\end{document}
