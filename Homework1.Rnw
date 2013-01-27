@@ -1,6 +1,7 @@
 \documentclass{article}
-\usepackage[a4paper]{geometry}
+\usepackage[top=2in, bottom=1in, left=1in, right=1in]{geometry}
 \usepackage{fancyhdr}
+\usepackage{amsmath}
 \pagestyle{fancyplain}
 \begin{document}
 \lhead{Math 571B\\ Homework 1}
@@ -18,17 +19,84 @@ row.names(frame) <- c('Yield','Design 1','Design 2','Design 3','Design 4','Desig
 colnames(frame) <- c(1,2,3,4,5,6)
 frame$MeanA <- apply(frame,1,function(row) round(sum(yield[which(row=='A')])/3,3))
 frame$MeanB <- apply(frame,1,function(row) round(sum(yield[which(row=='B')])/3,3))
-frame$MeanDiff <- frame$MeanA - frame$MeanB
-frame.table <- xtable(frame,caption='Randomization Matrix')
+frame$MeanDiff <- frame$MeanB - frame$MeanA
+
+frame.table <- xtable(frame,align='r|lllllllll',caption='Randomization Matrix')
+A <- c(3,2,4)
+B <- c(5,4,7)
+ttest <- t.test(A,B,alternative='less')
+sl <- c(108,138,124,163,124,159,106,134,115,139)
+hot <- c(11.176,7.089,8.097,11.739,11.291,10.759,6.467,8.315)
+htr <- c(5.263,6.748,7.461,7.015,8.133,7.418,3.772,8.963)
+h.t.test <- t.test(hot,htr,alternative='greater')
 @
 
 \begin{enumerate}
-  \item 
+  \item
     \begin{enumerate}
       \item The randomization matrix for treatments A and B along with the means and mean difference for each of the 20 unique possible designs 
 <<echo=FALSE,results=tex>>=
 frame.table
 @
+      \item The mean difference between treatments in Design 1, the actual experiment, is $2.33$. There are a total of 2 experiments out of twenty that have a mean difference greater than or equal to $2.33$. So the p-value, calculated as $Pr(Difference \ge 2.33 | randomization) = \frac{2}{20} = .10$.
+      \item For the two-sample t-test with $H_0: \mu_a = \mu_b$ vs. $H_a: \mu_b > \mu_a$, the t statistic is \Sexpr{round(ttest$statistic,3)} and the p-value is \Sexpr{round(ttest$p.value,3)}
+      \item *.
+    \end{enumerate}
+  \item[2.15]
+    \begin{enumerate}
+      \item We need to test the hypothesis that the population mean $\mu$ is greater than $\mu_0 = 120$. The Hypotheses are $H_0: \mu \le 120$ vs. $H_a: \mu > 120$. We will use the t-test, rejecting the null if
+          $$t_0 = \frac{\bar{y} - \mu_0}{S/\sqrt{n}} > t_{\alpha,n-1}$$
+      \item Here $\bar{y}$ = \Sexpr{round(mean(sl),3)}, $S =$ \Sexpr{round(sd(sl),3)}, and $n=10$. Therefore $t_0 =$ \Sexpr{round(t.test(sl,alternative='greater',mu=120)$statistic,3)}. According to the table in the appendix of Montgomery, $t_{0.01,9} = 2.821$. Since $t_0$ is less than $t_{0.01,9}$ we can not reject the null hypothesis at the $1\%$ level.
+      \item $t_{0.05,9} = 1.833$ and $t_{0.10,9} = 1.833$ so the actual p-value lies between .05 and .10, but much closer to .05. According to R it is \Sexpr{round(t.test(sl,alternative='greater',mu=120)$p.value,3)}.
+      \item The $99\%$ confidence interval is given by formula 2.38 in Montgomery
+        $$\begin{array}{rcl}P(\bar{y} - t_{.01/2,n-1}*S/\sqrt{n} &\le& \mu \le \bar{y} + t_{.01/2,n-1}*S/\sqrt{n}) = .01 \\
+                          P(131 - 3.25*19.545/\sqrt{10} &\le& \mu \le 131 + 3.25*19.545/\sqrt{10}) = .01 \\
+                          P(131 - 20.087 &\le& \mu \le 131+ 20.087) = .01 \\
+                          P(110.93 &\le& \mu \le 151.087) =.01
+        \end{array}$$
+    \end{enumerate}
+  \item[2.16] We can evaluate the normality assumption by constructing a QQ plot.
+        \begin{figure}[h]
+          \begin{center}
+<<fig=TRUE,height=5,echo=false>>=
+qqnorm(sl,main='Normal probability plot',ylab='Shelf life samples')
+qqline(sl)
+@      
+          \end{center}
+        \end{figure}
+            
+            Subjectively, based on the small sample provided, it appears reasonable to conclude that the shelf life of the population is normally distributed. If this assumption were substantially violated, the t-test would not be valid, and another way would have to be found to estimate the mean shelf life. 
+  \item[2.24] I will use the R function t.test to generate numbers in this question (a)-(e).
+    \begin{enumerate}
+      \item The two-sample t-statistic for this sample, testing the hypothesis $H_0: \mu_{95} > \mu_{100}$ vs. $H_a:\mu_{95} \le \mu_{100}$ is \Sexpr{round(h.t.test$statistic,3)} while $t_{0.05,14}$ is 1.761. Thus we have can not reject the null, that higher temperatures provide lower mean photoresist thickness, at the 5\% level.
+      \item The actual p-value for this two-sample t-test is \Sexpr{round(h.t.test$p.value,3)}
+      \item Pr(\Sexpr{round(h.t.test$conf.int[1],3)} $\le \mu_{100}-\mu_{95} \le \inf$) = .05. There is a 95\% probability that the difference between the mean photoresist thickness is greater than \Sexpr{round(h.t.test$conf.int[1],3)} kA.
+      \item The figures below show that the mean photoresist thickness at 95 degrees is generally greater than that for 100 degrees, visually verifying our previous result. 
+              \begin{figure}[h]
+          \begin{center}
+<<fig=TRUE,height=3,echo=false>>=
+stripchart(hot,method='stack',main='95 degrees',xlim=c(3,12),xlab='Mean photoresist thickness(kA)')
+@ 
+<<fig=TRUE,height=3,echo=false>>=
+stripchart(htr,method='stack',main='100 degrees',xlim=c(3,12),xlab='Mean photoresist thickness(kA)')
+@
+          \end{center}
+        \end{figure}\newpage
+      \item We will test the normality assumption using a QQ plot as in 2.16.
+              \begin{figure}[h]
+          \begin{center}
+<<fig=TRUE,width=8,height=5,echo=false>>=
+par(mfrow=c(1,2),oma=c(0,0,3,0),main='Normal probability plot')
+qqnorm(hot,main='95 degrees',ylab='Photoresist thickness')
+qqline(hot)
+qqnorm(htr,main='100 degrees',ylab='photoresist thickness')
+qqline(htr)
+mtext('Normal probability plot',outer=T,cex=1.5)
+@      
+          \end{center}
+        \end{figure}
+        
+        The normality assumption is justified by the data, although the two low values at 100 degrees seem to diverge from normal.
     \end{enumerate}
 \end{enumerate}
 
