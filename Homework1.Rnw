@@ -11,6 +11,7 @@
 <<echo=FALSE>>=
 library(combinat)
 library(xtable)
+library(pwr)
 yield <- c(3,5,4,2,7,4)
 treatments <- c('A','B','B','A','B','A')
 randomized <- unique(permn(treatments))
@@ -24,11 +25,15 @@ frame$MeanDiff <- frame$MeanB - frame$MeanA
 frame.table <- xtable(frame,align='r|lllllllll',caption='Randomization Matrix')
 A <- c(3,2,4)
 B <- c(5,4,7)
-ttest <- t.test(A,B,alternative='less')
+ttest <- t.test(A,B,alternative='two.sided')
 sl <- c(108,138,124,163,124,159,106,134,115,139)
 hot <- c(11.176,7.089,8.097,11.739,11.291,10.759,6.467,8.315)
 htr <- c(5.263,6.748,7.461,7.015,8.133,7.418,3.772,8.963)
 h.t.test <- t.test(hot,htr,alternative='greater')
+
+c1 <- c(.265,.265,.266,.267,.267,.265,.267,.267,.265,.268,.268,.265)
+c2 <- c(.264,.265,.264,.264,.267,.268,.264,.265,.265,.267,.268,.269)
+
 @
 
 \begin{enumerate}
@@ -38,9 +43,9 @@ h.t.test <- t.test(hot,htr,alternative='greater')
 <<echo=FALSE,results=tex>>=
 frame.table
 @
-      \item The mean difference between treatments in Design 1, the actual experiment, is $2.33$. There are a total of 2 experiments out of twenty that have a mean difference greater than or equal to $2.33$. So the p-value, calculated as $Pr(Difference \ge 2.33 | randomization) = \frac{2}{20} = .10$.
-      \item For the two-sample t-test with $H_0: \mu_a = \mu_b$ vs. $H_a: \mu_b > \mu_a$, the t statistic is \Sexpr{round(ttest$statistic,3)} and the p-value is \Sexpr{round(ttest$p.value,3)}
-      \item *.
+      \item The mean difference between treatments in Design 1, the actual experiment, is $2.33$. There are a total of 4 experiments out of twenty that have a mean absolute difference greater than or equal to $2.33$. So the p-value, calculated as $Pr(|Difference| \ge 2.33 | randomization) = \frac{4}{20} = .20$.
+      \item For the two-sample t-test with $H_0: \mu_a = \mu_b$ vs. $H_a: \mu_b \ne \mu_a$, the t statistic is \Sexpr{round(ttest$statistic,3)} and the p-value is \Sexpr{round(ttest$p.value,3)}
+      \item The two-sided two-sample t-test gives a smaller p-value than the randomization test, most likely because of the small sample size for each treatment.
     \end{enumerate}
   \item[2.15]
     \begin{enumerate}
@@ -59,7 +64,7 @@ frame.table
         \begin{figure}[h]
           \begin{center}
 <<fig=TRUE,height=5,echo=false>>=
-qqnorm(sl,main='Normal probability plot',ylab='Shelf life samples')
+qqnorm(sl,main='QQ plot',ylab='Shelf life samples')
 qqline(sl)
 @      
           \end{center}
@@ -97,6 +102,14 @@ mtext('Normal probability plot',outer=T,cex=1.5)
         \end{figure}
         
         The normality assumption is justified by the data, although the two low values at 100 degrees seem to diverge from normal.
+      \item Using the pooled sample variance $S_p^2 = \frac{(n_1-1)S_1^2 + (n_2-1)S_2^2}{n_1 + n_2 -2} = $ \Sexpr{round((7*(var(hot)+var(htr)))/14,3)}, the effect size for a 2.5kA mean difference is $d = \frac{2.5}{2*\sqrt{3.55}} = $ \Sexpr{round(2.5/(2*sqrt(3.55)),3)}. Using $n=16$ the R function pwr.t.test gives power = $\beta$ = \Sexpr{round(pwr.t.test(n=16,d=.663,type=('two.sample'))$power,3)}. With the current sample size of 16 there is a 44.3\% chance of rejecting $H_0:\mu_{95}\ne \mu_{100}$ when it is false.
+      \item Using the same pooled variance as above, $d = \frac{1.5}{2*\sqrt{3.55}}=$ \Sexpr{round(1.5/(2*sqrt(3.55)),3)}. To detect an effect that size with a power of 90\% you need a total sample size of $n^*=$ \Sexpr{round(pwr.t.test(power=.9,d=.398,type=('two.sample'))$n)}, so each treatment will need to be sampled $\frac{n^*+1}{2} \approx$ \Sexpr{135/2} times, which we round up to $n_1 = n_2 = 68$.
+    \end{enumerate}
+  \item[2.27] I will use the R function t.test to generate numbers in this problem.
+    \begin{enumerate}
+      \item There is not a significant difference in means between the populations the samples were drawn from at the $\alpha = 0.05$ level.
+      \item The two sample t-test for $H_0: \mu_1 = \mu_2$ has a p=value of \Sexpr{round(t.test(c1,c2)$p.value,3)} at the $\alpha = 0.05$ level.
+      \item The 95\% confidence interval for the mean difference in mean diameter measurements is \\ \Sexpr{round(t.test(c1,c2)$conf.int[1],5)} $ < \mu_1-\mu_2 < $ \Sexpr{round(t.test(c1,c2)$conf.int[2],5)}.
     \end{enumerate}
 \end{enumerate}
 
